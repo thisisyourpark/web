@@ -1,14 +1,19 @@
 const Koa = require('koa');
 const serve = require('koa-static');
-const webpack = require('webpack');
-const webpackDevMiddleware = require('koa-webpack-dev-middleware');
-const webpackHotMiddleware = require('koa-webpack-hot-middleware');
-const config = require('../webpack.config.js');
+const config = require('../config');
 
 const app = new Koa();
-const bundler = webpack(config);
 app.use(serve('static'));
-app.use(webpackDevMiddleware(bundler));
-app.use(webpackHotMiddleware(bundler));
+app.use(serve('dist'));
 
-app.listen(3001, () => console.log('app server started on port 3000'));
+if (process.env.NODE_ENV != 'PRODUCTION') {
+  const webpack = require('webpack');
+  const webpackConfig = require('../webpack.config.js');
+  const bundler = webpack(webpackConfig);
+  const webpackDevMiddleware = require('koa-webpack-dev-middleware');
+  const webpackHotMiddleware = require('koa-webpack-hot-middleware');
+  app.use(webpackDevMiddleware(bundler));
+  app.use(webpackHotMiddleware(bundler));
+}
+
+app.listen(process.env.port || config.get('app:port'), () => console.log(`app server started on port ${config.get('app:port')}`));
